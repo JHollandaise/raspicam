@@ -68,6 +68,8 @@ namespace raspicam {
 
             // Default everything to zero
             memset ( &State, 0, sizeof ( RASPIVID_STATE ) );
+            // should not change the state but for completeness
+            State.camera_component = nullptr;
             State.framerate 		= 30;
             State.width 			= 1280;      // use a multiple of 320 (640, 1280)
             State.height 			= 960;		// use a multiple of 240 (480, 960)
@@ -307,21 +309,26 @@ namespace raspicam {
             format->es->video.crop.y = 0;
             format->es->video.crop.width = state->width;
             format->es->video.crop.height = state->height;
-            // currently fixed at a integer frame rate for no real reason
+            // currently fixed at a integer frame rate, could add fractional values
+            // TODO: need to consider how to implement capture signal control
             format->es->video.frame_rate.num =  state->framerate;
             format->es->video.frame_rate.den = VIDEO_FRAME_RATE_DEN;
 
             status = mmal_port_format_commit ( video_port );
             if ( status ) {
                 cerr<< ( "camera video format couldn't be set" );
+                // if it fails, we kill the camera comp. for some reason
                 mmal_component_destroy ( camera );
                 return 0;
             }
 
             // PR : plug the callback to the video port
+            // we default by connecting the video port straight to a callback function
+            // TODO: deeper pipeline configuration, this requires port connection configuration
             status = mmal_port_enable ( video_port,video_buffer_callback );
             if ( status ) {
                 cerr<< ( "camera video callback2 error" );
+                // kill the camera comp. on a failed enable
                 mmal_component_destroy ( camera );
                 return 0;
             }
@@ -498,9 +505,13 @@ namespace raspicam {
 
             bool hasGrabbed=false;
 //            pData->_mutex.lock();
+            //grab the userdata mem frame
              std::unique_lock<std::mutex> lck ( pData->_mutex );
+             // if there is something contained in the userdata callback frame
             if ( pData ) {
+                // we want the frame and there is something in the buffer??
                 if ( pData->wantToGrab &&  buffer->length ) {
+                    // pin down the buffer
                     mmal_buffer_header_mem_lock ( buffer );
                     pData->_buffData.resize ( buffer->length );
                     memcpy ( pData->_buffData.data,buffer->data,buffer->length );
