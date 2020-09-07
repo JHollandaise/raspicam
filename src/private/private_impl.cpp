@@ -294,14 +294,20 @@ namespace raspicam {
             // Set the encode format on the video  port
 
             format = video_port->format;
+            // are we using the OPAQUE format here? looks like we are specifying to use RGB rather than opaque
+            // so we want to change this to allow piping over to an h.264 encoder, or MJPEG, or over to an EGL via DMA
+            // for GPU assisted computation
             format->encoding_variant =   convertFormat ( State.captureFtm );
             format->encoding = convertFormat ( State.captureFtm );
             format->es->video.width = VCOS_ALIGN_UP(state->width, 32);
             format->es->video.height = VCOS_ALIGN_UP(state->height, 16);
+            // the crop parameters should be some range 0, 65535?
+            // I'm not sure I like the way this crop is set up
             format->es->video.crop.x = 0;
             format->es->video.crop.y = 0;
             format->es->video.crop.width = state->width;
             format->es->video.crop.height = state->height;
+            // currently fixed at a integer frame rate for no real reason
             format->es->video.frame_rate.num =  state->framerate;
             format->es->video.frame_rate.den = VIDEO_FRAME_RATE_DEN;
 
