@@ -108,6 +108,7 @@ namespace raspicam {
             camera_video_port   = State.camera_component->output[MMAL_CAMERA_VIDEO_PORT];
             callback_data.pstate = &State;
             // assign data to use for callback
+            // TODO: understand better the flow of port.userdata <-> this.callback_data
             camera_video_port->userdata = ( struct MMAL_PORT_USERDATA_T * ) &callback_data;
 
             _isOpened=true;
@@ -328,7 +329,7 @@ namespace raspicam {
             status = mmal_port_enable ( video_port,video_buffer_callback );
             if ( status ) {
                 cerr<< ( "camera video callback2 error" );
-                // kill the camera comp. on a failed enable
+                // kill the camera component on a failed enable
                 mmal_component_destroy ( camera );
                 return 0;
             }
@@ -359,7 +360,7 @@ namespace raspicam {
                 return 0;
             }
 
-            state->camera_component = camera;//this needs to be before set_all_parameters
+            state->camera_component = camera; //this needs to be before set_all_parameters
 
             return camera;
         }
@@ -505,26 +506,30 @@ namespace raspicam {
 
             bool hasGrabbed=false;
 //            pData->_mutex.lock();
-            //grab the userdata mem frame
-             std::unique_lock<std::mutex> lck ( pData->_mutex );
-             // if there is something contained in the userdata callback frame
+            //grab the userdata mem frame, note also that this lock will auto release when out of scope
+            std::unique_lock<std::mutex> lck ( pData->_mutex );
+            // if there is something contained in the userdata callback frame
             if ( pData ) {
-                // we want the frame and there is something in the buffer??
+                // we want the frame and buffer is not empty
                 if ( pData->wantToGrab &&  buffer->length ) {
                     // pin down the buffer
                     mmal_buffer_header_mem_lock ( buffer );
+
+                    // clear buffer and make room for new data from port callback
                     pData->_buffData.resize ( buffer->length );
                     memcpy ( pData->_buffData.data,buffer->data,buffer->length );
-                    pData->wantToGrab =false;
+                    // we have now successfully grabbed the frame so unset require flag and set completion flag
+                    pData->wantToGrab = false;
                     hasGrabbed=true;
+                    // release the buffer
                     mmal_buffer_header_mem_unlock ( buffer );
                 }
             }
-            //pData->_mutex.unlock();
-           // if ( hasGrabbed ) pData->Thcond.BroadCast(); //wake up waiting client
+            //pData->_mutex.unlock()
+            // if ( hasGrabbed ) pData->Thcond.BroadCast(); //wake up waiting client
             // release buffer back to the pool
             mmal_buffer_header_release ( buffer );
-            // and send one back to the port (if still open)
+            // assign a new buffer to the port from the pool
             if ( port->is_enabled ) {
                 MMAL_STATUS_T status;
 
@@ -537,6 +542,7 @@ namespace raspicam {
                     printf ( "Unable to return a buffer to the encoder port" );
             }
 
+            // force shutter speed
             if ( pData->pstate->shutterSpeed!=0 )
                 mmal_port_parameter_set_uint32 ( pData->pstate->camera_component->control, MMAL_PARAMETER_SHUTTER_SPEED, pData->pstate->shutterSpeed ) ;
             if ( hasGrabbed ) pData->Thcond.BroadCast(); //wake up waiting client

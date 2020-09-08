@@ -92,10 +92,12 @@ namespace raspicam {
         class membuf{
             public:
             membuf() {
+                // nullptr
                 data=0;
                 size=0;
             }
             ~membuf() {
+                // nullptr
                 if ( data!=0 ) delete []data;
             }
             void resize ( size_t s ) {
