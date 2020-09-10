@@ -99,7 +99,7 @@ namespace raspicam {
         }
         bool  Private_Impl::open ( bool StartCapture ) {
             if ( _isOpened ) return false; //already opened
-// create camera
+            // create camera
             if ( ! create_camera_component ( &State ) ) {
                 cerr<<__func__<<" Failed to create camera component"<<__FILE__<<" "<<__LINE__<<endl;
                 return false;
@@ -129,7 +129,6 @@ namespace raspicam {
                 return false;
             }
             // Send all the buffers to the video port
-
             int num = mmal_queue_length ( State.video_pool->queue );
             int q;
             for ( q=0; q<num; q++ ) {
@@ -177,6 +176,8 @@ namespace raspicam {
         *
          */
         void Private_Impl::retrieve ( unsigned char *data,RASPICAM_FORMAT type ) {
+            // TODO: should not need to re-acquire lock after grab.
+            std::unique_lock<std::mutex> lock(callback_data._mutex);
             if ( callback_data._buffData.size==0 ) return;
             if ( type!=RASPICAM_FORMAT_IGNORE ) {
                 cerr<<__FILE__<<":"<<__LINE__<<" :Private_Impl::retrieve type is not RASPICAM_FORMAT_IGNORE as it should be"<<endl;
@@ -335,6 +336,7 @@ namespace raspicam {
             }
 
             // Ensure there are enough buffers to avoid dropping frames
+            // TODO: is this a pointless line of code if we just set it to the recommended value below??
             if ( video_port->buffer_num < VIDEO_OUTPUT_BUFFERS_NUM )
                 video_port->buffer_num = VIDEO_OUTPUT_BUFFERS_NUM;
 
@@ -502,13 +504,15 @@ namespace raspicam {
 
         void Private_Impl::video_buffer_callback ( MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer ) {
             MMAL_BUFFER_HEADER_T *new_buffer;
-            PORT_USERDATA *pData = ( PORT_USERDATA * ) port->userdata;
+            // points to the
+            auto *pData = ( PORT_USERDATA * ) port->userdata;
 
             bool hasGrabbed=false;
 //            pData->_mutex.lock();
             //grab the userdata mem frame, note also that this lock will auto release when out of scope
             std::unique_lock<std::mutex> lck ( pData->_mutex );
             // if there is something contained in the userdata callback frame
+            // TODO: pretty sure this will never be false. This could shave off a fair wack of time
             if ( pData ) {
                 // we want the frame and buffer is not empty
                 if ( pData->wantToGrab &&  buffer->length ) {

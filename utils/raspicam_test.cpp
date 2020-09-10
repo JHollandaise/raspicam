@@ -203,7 +203,6 @@ int main ( int argc,char **argv ) {
     unsigned char *data=new unsigned char[  Camera.getImageBufferSize( )];
     Timer timer;
 
-
     cout<<"Capturing...."<<endl;
     size_t i=0;
     timer.start();
