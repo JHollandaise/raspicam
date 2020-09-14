@@ -67,7 +67,7 @@ namespace raspicam {
                     wantToGrab=true;
 //                    _mutex.unlock();
 //                    Thcond.Wait();
-                       Thcond.Wait(lck); //this will unlock the mutex and wait atomically
+                    Thcond.Wait(lck); //this will unlock the mutex and wait atomically
                 };
 
 
