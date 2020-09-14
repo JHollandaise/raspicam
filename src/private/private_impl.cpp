@@ -514,170 +514,172 @@ namespace raspicam {
 
         void Private_Impl::video_buffer_callback ( MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer ) {
             MMAL_BUFFER_HEADER_T *new_buffer;
-            PORT_USERDATA *pData = ( PORT_USERDATA * ) port->userdata;
+            PORT_USERDATA *pData = (PORT_USERDATA*) port->userdata;
+
+            // time the buffer arrived at the GPU
+            // buffer->pts;
 
             bool hasGrabbed=false;
-//            pData->_mutex.lock();
-            //grab the userdata mem frame, note also that this lock will auto release when out of scope
-            std::unique_lock<std::mutex> lck ( pData->_mutex );
+            // grab the userdata mem frame, note also that this lock will auto release when out of scope
+            std::unique_lock<std::mutex> lck (pData->_mutex);
             // if there is something contained in the userdata callback frame
             if ( pData ) {
                 // we want the frame and buffer is not empty
-                if ( pData->wantToGrab &&  buffer->length ) {
+                if (pData->wantToGrab &&  buffer->length) {
                     // pin down the buffer
-                    mmal_buffer_header_mem_lock ( buffer );
+                    mmal_buffer_header_mem_lock(buffer);
 
                     // clear buffer and make room for new data from port callback
-                    pData->_buffData.resize ( buffer->length );
-                    memcpy ( pData->_buffData.data,buffer->data,buffer->length );
+                    pData->_buffData.resize(buffer->length);
+                    memcpy(pData->_buffData.data,buffer->data,buffer->length);
                     // we have now successfully grabbed the frame so unset require flag and set completion flag
                     pData->wantToGrab = false;
                     hasGrabbed=true;
                     // release the buffer
-                    mmal_buffer_header_mem_unlock ( buffer );
+                    mmal_buffer_header_mem_unlock(buffer);
                 }
             }
             //pData->_mutex.unlock()
-            // if ( hasGrabbed ) pData->Thcond.BroadCast(); //wake up waiting client
+            // if (hasGrabbed) pData->Thcond.BroadCast(); //wake up waiting client
             // release buffer back to the pool
             mmal_buffer_header_release ( buffer );
             // assign a new buffer to the port from the pool
-            if ( port->is_enabled ) {
+            if (port->is_enabled) {
                 MMAL_STATUS_T status;
 
-                new_buffer = mmal_queue_get ( pData->pstate->video_pool->queue );
+                new_buffer = mmal_queue_get(pData->pstate->video_pool->queue);
 
-                if ( new_buffer )
-                    status = mmal_port_send_buffer ( port, new_buffer );
+                if (new_buffer)
+                    status = mmal_port_send_buffer(port, new_buffer);
 
-                if ( !new_buffer || status != MMAL_SUCCESS )
-                    printf ( "Unable to return a buffer to the encoder port" );
+                if (!new_buffer || status != MMAL_SUCCESS)
+                    printf ("Unable to return a buffer to the encoder port");
             }
 
             // force shutter speed
-            if ( pData->pstate->shutterSpeed!=0 )
+            if (pData->pstate->shutterSpeed!=0)
                 mmal_port_parameter_set_uint32 ( pData->pstate->camera_component->control, MMAL_PARAMETER_SHUTTER_SPEED, pData->pstate->shutterSpeed ) ;
-            if ( hasGrabbed ) pData->Thcond.BroadCast(); //wake up waiting client
+            if (hasGrabbed) pData->Thcond.BroadCast(); //wake up waiting client
 
         }
 
 
 
-        void Private_Impl::setWidth ( unsigned int width ) {
+        void Private_Impl::setWidth(unsigned int width){
             State.width = width;
         }
 
-        void Private_Impl::setHeight ( unsigned int height ) {
+        void Private_Impl::setHeight(unsigned int height){
             State.height = height;
         }
-        void Private_Impl::setFormat ( RASPICAM_FORMAT fmt ) {
-            if ( isOpened() ) {
+        void Private_Impl::setFormat(RASPICAM_FORMAT fmt){
+            if (isOpened()){
                 cerr<<__FILE__<<":"<<__LINE__<<":"<<__func__<<": can not change format with camera already opened"<<endl;
                 return;
             }
             State.captureFtm = fmt;
         }
 
-        void Private_Impl::setCaptureSize ( unsigned int width, unsigned int height ) {
-            setWidth ( width );
-            setHeight ( height );
+        void Private_Impl::setCaptureSize(unsigned int width, unsigned int height){
+            setWidth (width);
+            setHeight (height);
         }
 
-        void Private_Impl::setVideoStabilization ( bool v ) {
+        void Private_Impl::setVideoStabilization (bool v){
             State.videoStabilisation=v;
-            if ( isOpened() ) commitVideoStabilization();
+            if (isOpened()) commitVideoStabilization();
         }
 
-        void Private_Impl::setBrightness ( unsigned int brightness ) {
-            if ( brightness > 100 )                brightness = 100 ;
+        void Private_Impl::setBrightness(unsigned int brightness){
+            if (brightness > 100)                brightness = 100 ;
             State.brightness = brightness;
-            if ( isOpened() ) commitBrightness();
+            if (isOpened()) commitBrightness();
         }
-        void Private_Impl::setShutterSpeed ( unsigned  int shutter ) {
-            if ( shutter > 330000 )
+        void Private_Impl::setShutterSpeed(unsigned int shutter){
+            if (shutter > 330000)
                 shutter = 330000;
             State.shutterSpeed= shutter;
-            if ( isOpened() ) commitShutterSpeed();
+            if (isOpened()) commitShutterSpeed();
         }
 
 
 
 
-        void Private_Impl::setRotation ( int rotation ) {
-            while ( rotation < 0 )
+        void Private_Impl::setRotation(int rotation){
+            while (rotation < 0)
                 rotation += 360;
-            if ( rotation >= 360 )
+            if (rotation >= 360)
                 rotation = rotation % 360;
             State.rotation = rotation;
-            if ( isOpened() ) commitRotation();
+            if (isOpened()) commitRotation();
         }
 
-        void Private_Impl::setISO ( int iso ) {
+        void Private_Impl::setISO(int iso){
             State.ISO = iso;
-            if ( isOpened() ) commitISO();
+            if (isOpened()) commitISO();
         }
 
-        void Private_Impl::setSharpness ( int sharpness ) {
-            if ( sharpness < -100 ) sharpness = -100;
-            if ( sharpness > 100 ) sharpness = 100;
+        void Private_Impl::setSharpness (int sharpness){
+            if (sharpness < -100) sharpness = -100;
+            if (sharpness > 100) sharpness = 100;
             State.sharpness = sharpness;
-            if ( isOpened() ) commitSharpness();
+            if (isOpened()) commitSharpness();
         }
 
-        void Private_Impl::setContrast ( int contrast ) {
-            if ( contrast < -100 ) contrast = -100;
-            if ( contrast > 100 ) contrast = 100;
+        void Private_Impl::setContrast(int contrast){
+            if (contrast < -100) contrast = -100;
+            if (contrast > 100) contrast = 100;
             State.contrast = contrast;
-            if ( isOpened() ) commitContrast();
+            if (isOpened()) commitContrast();
         }
 
-        void Private_Impl::setSaturation ( int saturation ) {
-            if ( saturation < -100 ) saturation = -100;
-            if ( saturation > 100 ) saturation = 100;
+        void Private_Impl::setSaturation(int saturation){
+            if (saturation < -100) saturation = -100;
+            if (saturation > 100) saturation = 100;
             State.saturation = saturation;
-            if ( isOpened() ) commitSaturation();
+            if (isOpened()) commitSaturation();
         }
 
 
-        void Private_Impl::setAWB_RB ( float red_g, float blue_g ) {
+        void Private_Impl::setAWB_RB(float red_g, float blue_g){
             State.awbg_blue = blue_g;
             State.awbg_red = red_g;
-            if ( isOpened() ) commitAWB_RB();
+            if (isOpened()) commitAWB_RB();
         }
-        void Private_Impl::setExposure ( RASPICAM_EXPOSURE exposure ) {
+        void Private_Impl::setExposure(RASPICAM_EXPOSURE exposure){
             State.rpc_exposureMode = exposure;
-            if ( isOpened() ) commitExposure();
+            if (isOpened()) commitExposure();
         }
 
-        void Private_Impl::setAWB ( RASPICAM_AWB awb ) {
+        void Private_Impl::setAWB(RASPICAM_AWB awb){
             State.rpc_awbMode = awb;
-            if ( isOpened() ) commitAWB();
+            if (isOpened()) commitAWB();
         }
 
-        void Private_Impl::setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
+        void Private_Impl::setImageEffect(RASPICAM_IMAGE_EFFECT imageEffect){
             State.rpc_imageEffect = imageEffect;
-            if ( isOpened() ) commitImageEffect();
+            if (isOpened()) commitImageEffect();
         }
 
-        void Private_Impl::setMetering ( RASPICAM_METERING metering ) {
+        void Private_Impl::setMetering(RASPICAM_METERING metering){
             State.rpc_exposureMeterMode = metering;
-            if ( isOpened() ) commitMetering();
+            if (isOpened()) commitMetering();
         }
-        void Private_Impl::setExposureCompensation ( int val ) {
-            if ( val < -10 ) val= -10;
-            if ( val > 10 ) val = 10;
+        void Private_Impl::setExposureCompensation(int val){
+            if (val < -10) val= -10;
+            if (val > 10) val = 10;
             State.exposureCompensation=val;
-            if ( isOpened() ) commitExposureCompensation();
+            if (isOpened()) commitExposureCompensation();
         }
 
-        void Private_Impl::setHorizontalFlip ( bool hFlip ) {
+        void Private_Impl::setHorizontalFlip(bool hFlip){
             State.hflip = hFlip;
-            if ( isOpened() ) commitFlips();
+            if (isOpened()) commitFlips();
         }
 
-        void Private_Impl::setVerticalFlip ( bool vFlip ) {
+        void Private_Impl::setVerticalFlip(bool vFlip){
             State.vflip = vFlip;
-            if ( isOpened() ) commitFlips();
+            if (isOpened()) commitFlips();
         }
 
         MMAL_PARAM_EXPOSUREMETERINGMODE_T Private_Impl::convertMetering ( RASPICAM_METERING metering ) {
