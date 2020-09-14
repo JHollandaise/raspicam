@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdio>
 #include <string>
 #include "raspicamtypes.h"
+#include "mmal/mmal_types.h"
 namespace raspicam {
 
     namespace _private{
@@ -47,6 +48,7 @@ namespace raspicam {
     };
     /**Base class that do all the hard work
      */
+
     class RaspiCam
     {
         public:
@@ -139,6 +141,8 @@ namespace raspicam {
         void setHorizontalFlip ( bool hFlip );
         void setVerticalFlip ( bool vFlip );
         void setFrameRate(unsigned int fr);
+        // provides on-line frame rate adjustment
+        void setFramerateDelta(MMAL_RATIONAL_T setpoint);
         //Accessors
         RASPICAM_FORMAT getFormat() const;
         unsigned int getWidth() const;
@@ -159,6 +163,8 @@ namespace raspicam {
         bool isHorizontallyFlipped() const ;
         bool isVerticallyFlipped() const ;
         unsigned int  getFrameRate()const;
+        // the current delta of framerate will be shovelled into value
+        void getFramerateDelta(MMAL_RATIONAL_T *value) const;
 
         /** Returns an id of the camera. We assume the camera id is the one of the raspberry
         *the id is obtained using raspberry serial number obtained in /proc/cpuinfo

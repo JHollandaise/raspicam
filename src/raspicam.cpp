@@ -136,6 +136,8 @@ namespace raspicam {
     }
    void RaspiCam::setFrameRate( unsigned int  fr) {  _impl->setFrameRate(fr);}
 
+   void RaspiCam::setFramerateDelta(MMAL_RATIONAL_T setpoint) { _impl->setFramerateDelta(setpoint); }
+
     
     RASPICAM_FORMAT RaspiCam::getFormat()const{return _impl->getFormat( ); }
     unsigned int RaspiCam::getWidth() const{return _impl->getWidth() ;}
@@ -145,6 +147,7 @@ namespace raspicam {
     int RaspiCam::getISO() const{return _impl->getISO() ;}
     unsigned int RaspiCam::getShutterSpeed() const{return _impl->getShutterSpeed();}//return _impl->getShutterSpeed();}
     unsigned int  RaspiCam::getFrameRate()const{return _impl->getFrameRate();}
+    void RaspiCam::getFramerateDelta(MMAL_RATIONAL_T *value) const {_impl->getFramerateDelta(value);}
 
     int RaspiCam::getSharpness() const{return _impl->getSharpness() ;}
     int RaspiCam::getContrast() const{return _impl->getContrast() ;}

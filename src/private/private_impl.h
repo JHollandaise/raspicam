@@ -141,7 +141,9 @@ namespace raspicam {
             void setExposureCompensation ( int val ); //-10,10
             void setAWB ( RASPICAM_AWB awb );
             void setAWB_RB ( float red,float blue );//ranges [0,1]
-            void  setFrameRate ( unsigned int frame_rate ) ;
+            void setFrameRate ( unsigned int frame_rate ) ;
+
+            void setFramerateDelta (MMAL_RATIONAL_T value);
 
             void setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect );
             void setMetering ( RASPICAM_METERING metering );
@@ -195,6 +197,9 @@ namespace raspicam {
             {
              return State.framerate;
             }
+
+            void getFramerateDelta(MMAL_RATIONAL_T *value) const;
+
             RASPICAM_EXPOSURE getExposure() const
             {
                 return State.rpc_exposureMode;

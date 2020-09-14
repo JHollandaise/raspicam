@@ -240,6 +240,17 @@ namespace raspicam {
             };
         }
 
+        void Private_Impl::getFramerateDelta(MMAL_RATIONAL_T *value) const {
+            // TODO: need to check the camera is currently active?
+            // TODO: something about if there is no encoder active use preview port rather than video
+            // first read the actual framerate parameter into value
+            mmal_port_parameter_get_rational(State.camera_component->control, MMAL_PARAMETER_FRAME_RATE, value);
+
+
+            // remove the initialised format framerate from the current value
+            value->num -= State.framerate*value->den;
+        }
+
 
 
         /**
@@ -291,6 +302,7 @@ namespace raspicam {
             cam_config.num_preview_video_frames = 3;
             cam_config.stills_capture_circular_buffer_height = 0;
             cam_config.fast_preview_resume = 0;
+            // do we want to use reset or raw?
             cam_config.use_stc_timestamp = MMAL_PARAM_TIMESTAMP_MODE_RESET_STC;
             mmal_port_parameter_set ( camera->control, &cam_config.hdr );
 
@@ -299,7 +311,7 @@ namespace raspicam {
             format = video_port->format;
             // are we using the OPAQUE format here? looks like we are specifying to use RGB rather than opaque
             // so we want to change this to allow piping over to an h.264 encoder, or MJPEG, or over to an EGL via DMA
-            // for GPU assisted computation
+            // TODO: encoder pipeline configuration
             format->encoding_variant =   convertFormat ( State.captureFtm );
             format->encoding = convertFormat ( State.captureFtm );
             format->es->video.width = VCOS_ALIGN_UP(state->width, 32);
@@ -328,7 +340,7 @@ namespace raspicam {
             // TODO: deeper pipeline configuration, this requires port connection configuration
             status = mmal_port_enable ( video_port,video_buffer_callback );
             if ( status ) {
-                cerr<< ( "camera video callback2 error" );
+                cerr<< ( "camera video callback error" );
                 // kill the camera component on a failed enable
                 mmal_component_destroy ( camera );
                 return 0;
@@ -668,7 +680,6 @@ namespace raspicam {
             if ( isOpened() ) commitFlips();
         }
 
-
         MMAL_PARAM_EXPOSUREMETERINGMODE_T Private_Impl::convertMetering ( RASPICAM_METERING metering ) {
             switch ( metering ) {
             case RASPICAM_METERING_AVERAGE:
@@ -793,6 +804,19 @@ namespace raspicam {
 
         void Private_Impl::setFrameRate ( unsigned int frame_rate ) {
             State.framerate = frame_rate;
+        }
+
+// here we are assuming that the framerate is always just an integer value, so check VIDEO_FRAMRE_RATE_DEN is def as 1
+#if VIDEO_FRAME_RATE_DEN != 1
+#   error "fix your framerate setting function to account for the different denominator"
+#endif
+        void Private_Impl::setFramerateDelta(MMAL_RATIONAL_T value) {
+            // first get the new framerate required
+            int32_t num {State.framerate*value.den};
+            if ( mmal_port_parameter_set_rational ( State.camera_component->control, MMAL_PARAMETER_FRAME_RATE, {
+                num, value.den
+            }) != MMAL_SUCCESS )
+                cout << __func__ << ": Failed to set sharpness parameter.\n";
         }
 
         int Private_Impl::convertFormat ( RASPICAM_FORMAT fmt ) {
