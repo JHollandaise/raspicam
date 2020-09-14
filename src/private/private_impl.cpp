@@ -516,6 +516,12 @@ namespace raspicam {
             MMAL_BUFFER_HEADER_T *new_buffer;
             PORT_USERDATA *pData = (PORT_USERDATA*) port->userdata;
 
+            // does this callback refer to a buffer with a frame start?
+            if(buffer->flags & MMAL_BUFFER_HEADER_FLAG_FRAME_START) {
+                // then get the presentation timestamp
+
+                int64_t buffer-
+            }
             // time the buffer arrived at the GPU
             // buffer->pts;
 
