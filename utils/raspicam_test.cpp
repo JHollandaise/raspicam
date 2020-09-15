@@ -199,6 +199,7 @@ int main ( int argc,char **argv ) {
         cerr<<"Error opening camera"<<endl;
         return -1;
     }
+    Camera.setFramerateDelta({4,1});
     cout<<"Connected to camera ="<<Camera.getId() <<" bufs="<<Camera.getImageBufferSize( )<<endl;
     unsigned char *data=new unsigned char[  Camera.getImageBufferSize( )];
     Timer timer;

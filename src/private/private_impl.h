@@ -56,13 +56,11 @@ namespace raspicam {
             */
             struct PORT_USERDATA
             {
-                PORT_USERDATA() {
-                    wantToGrab=false;
-                    pstate=0;
-                }
+                PORT_USERDATA(): currentFrameInterval(0), lastPTS(0), wantToGrab(false), pstate(nullptr){}
+
                 void waitForFrame() {
                     //_mutex.lock();
-                    std::unique_lock<std::mutex> lck ( _mutex );
+                    std::unique_lock<std::mutex> lck(_mutex);
 
                     wantToGrab=true;
 //                    _mutex.unlock();
@@ -72,6 +70,8 @@ namespace raspicam {
 
 
 
+                int64_t currentFrameInterval;
+                int64_t lastPTS;
                 RASPIVID_STATE *pstate;            /// pointer to our state in case required in callback
                  std::mutex _mutex;
                 ThreadCondition Thcond;
@@ -240,7 +240,7 @@ namespace raspicam {
             size_t getImageTypeSize ( RASPICAM_FORMAT type ) const;
 
             private:
-            static void video_buffer_callback ( MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer );
+            static void VideoBufferCallback (MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer );
             void setDefaultStateParams();
             MMAL_COMPONENT_T *create_camera_component ( RASPIVID_STATE *state );
             void destroy_camera_component ( RASPIVID_STATE *state );
@@ -260,7 +260,7 @@ namespace raspicam {
             void commitMetering();
             void commitFlips();
             void commitExposureCompensation();
-            void commitVideoStabilization();
+            void CommitVideoStabilization();
             void commitShutterSpeed();
             void commitAWB_RB();
 

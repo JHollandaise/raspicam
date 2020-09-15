@@ -59,15 +59,15 @@ namespace raspicam {
             setDefaultStateParams();
         }
 
-        Private_Impl::~Private_Impl() {
+        Private_Impl::~Private_Impl(){
 
             release();
         }
 
-        void Private_Impl::setDefaultStateParams() {
+        void Private_Impl::setDefaultStateParams(){
 
             // Default everything to zero
-            memset ( &State, 0, sizeof ( RASPIVID_STATE ) );
+            memset (&State, 0, sizeof(RASPIVID_STATE));
             // should not change the state but for completeness
             State.camera_component = nullptr;
             State.framerate 		= 30;
@@ -97,10 +97,10 @@ namespace raspicam {
             State.awbg_blue=1.0;
 
         }
-        bool  Private_Impl::open ( bool StartCapture ) {
-            if ( _isOpened ) return false; //already opened
+        bool  Private_Impl::open (bool StartCapture){
+            if (_isOpened) return false; //already opened
 // create camera
-            if ( ! create_camera_component ( &State ) ) {
+            if (!create_camera_component(&State)){
                 cerr<<__func__<<" Failed to create camera component"<<__FILE__<<" "<<__LINE__<<endl;
                 return false;
             }
@@ -109,36 +109,36 @@ namespace raspicam {
             callback_data.pstate = &State;
             // assign data to use for callback
             // TODO: understand better the flow of port.userdata <-> this.callback_data
-            camera_video_port->userdata = ( struct MMAL_PORT_USERDATA_T * ) &callback_data;
+            camera_video_port->userdata = (struct MMAL_PORT_USERDATA_T*) &callback_data;
 
             _isOpened=true;
-            if ( StartCapture ) return startCapture();
+            if (StartCapture) return startCapture();
             else return true;
         }
         /**
          */
         bool Private_Impl::startCapture() {
-            if ( !_isOpened ) {
+            if (!_isOpened) {
                 cerr<<__FILE__<<":"<<__LINE__<<":"<<__func__<<" not opened."<<endl;
                 return false; //already opened
             }
 
             // start capture
-            if ( mmal_port_parameter_set_boolean ( camera_video_port, MMAL_PARAMETER_CAPTURE, 1 ) != MMAL_SUCCESS ) {
+            if (mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, 1) != MMAL_SUCCESS) {
                 release();
                 return false;
             }
             // Send all the buffers to the video port
 
-            int num = mmal_queue_length ( State.video_pool->queue );
+            int num = mmal_queue_length (State.video_pool->queue);
             int q;
-            for ( q=0; q<num; q++ ) {
-                MMAL_BUFFER_HEADER_T *buffer = mmal_queue_get ( State.video_pool->queue );
+            for (q=0; q<num; q++) {
+                MMAL_BUFFER_HEADER_T *buffer = mmal_queue_get (State.video_pool->queue);
 
-                if ( !buffer )
+                if (!buffer)
                     cerr<<"Unable to get a required buffer"<<q<<" from pool queue"<<endl;
 
-                if ( mmal_port_send_buffer ( camera_video_port, buffer ) != MMAL_SUCCESS )
+                if (mmal_port_send_buffer(camera_video_port, buffer) != MMAL_SUCCESS)
                     cerr<<"Unable to send a buffer to encoder output port "<< q<<endl;
             }
             _isCapturing=true;
@@ -146,20 +146,20 @@ namespace raspicam {
         }
 
         void Private_Impl::release() {
-            if ( !_isOpened ) return;
+            if (!_isOpened) return;
 
             // Disable camera_video_port
-            if ( camera_video_port && camera_video_port->is_enabled ) {
-                mmal_port_disable ( camera_video_port );
+            if (camera_video_port && camera_video_port->is_enabled){
+                mmal_port_disable(camera_video_port);
                 camera_video_port = NULL;
             }
             ////
             // Disable all our ports that are not handled by connections
-            if ( State.camera_component )
-                mmal_component_disable ( State.camera_component );
+            if (State.camera_component)
+                mmal_component_disable(State.camera_component);
 
 
-            destroy_camera_component ( &State );
+            destroy_camera_component(&State);
 
             _isOpened=false;
             _isCapturing=false;
@@ -169,7 +169,7 @@ namespace raspicam {
         *
          */
         bool Private_Impl::grab() {
-            if ( !isCapturing() ) return false;
+            if (!isCapturing()) return false;
             callback_data.waitForFrame();
             return true;
         }
@@ -338,7 +338,7 @@ namespace raspicam {
             // PR : plug the callback to the video port
             // we default by connecting the video port straight to a callback function
             // TODO: deeper pipeline configuration, this requires port connection configuration
-            status = mmal_port_enable ( video_port,video_buffer_callback );
+            status = mmal_port_enable(video_port, VideoBufferCallback);
             if ( status ) {
                 cerr<< ( "camera video callback error" );
                 // kill the camera component on a failed enable
@@ -482,29 +482,29 @@ namespace raspicam {
          * @param params Pointer to parameter block containing parameters
          * @return 0 if successful, none-zero if unsuccessful.
          */
-        void Private_Impl::commitParameters ( ) {
-            assert ( State.camera_component!=0 );
+        void Private_Impl::commitParameters(){
+            assert (State.camera_component!=0);
             commitSaturation();
             commitSharpness();
             commitContrast();
             commitBrightness();
             commitISO();
-            if ( State.shutterSpeed!=0 ) {
+            if (State.shutterSpeed!=0){
                 commitShutterSpeed();
                 State.rpc_exposureMode=RASPICAM_EXPOSURE_FIXEDFPS;
                 commitExposure();
-            } else           commitExposure();
+            } else commitExposure();
             commitExposureCompensation();
             commitMetering();
             commitImageEffect();
             commitRotation();
             commitFlips();
-            commitVideoStabilization();
+            CommitVideoStabilization();
             commitAWB();
             commitAWB_RB();
 
         }
-        void Private_Impl::commitVideoStabilization() {
+        void Private_Impl::CommitVideoStabilization() {
             // Set Video Stabilization
             if ( mmal_port_parameter_set_boolean ( State.camera_component->control, MMAL_PARAMETER_VIDEO_STABILISATION, State.videoStabilisation ) != MMAL_SUCCESS )
                 cout << __func__ << ": Failed to set video stabilization parameter.\n";
@@ -512,23 +512,21 @@ namespace raspicam {
 
 
 
-        void Private_Impl::video_buffer_callback ( MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer ) {
+        void Private_Impl::VideoBufferCallback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer){
             MMAL_BUFFER_HEADER_T *new_buffer;
-            PORT_USERDATA *pData = (PORT_USERDATA*) port->userdata;
-
-            // does this callback refer to a buffer with a frame start?
-            if(buffer->flags & MMAL_BUFFER_HEADER_FLAG_FRAME_START) {
-                // then get the presentation timestamp
-
-                int64_t buffer-
-            }
-            // time the buffer arrived at the GPU
-            // buffer->pts;
+            auto *pData = (PORT_USERDATA*) port->userdata;
 
             bool hasGrabbed=false;
             // grab the userdata mem frame, note also that this lock will auto release when out of scope
             std::unique_lock<std::mutex> lck (pData->_mutex);
-            // if there is something contained in the userdata callback frame
+
+            // TODO: can remove this in due course
+            // does this callback refer to a buffer with a new frame start?
+            if(buffer->flags & MMAL_BUFFER_HEADER_FLAG_FRAME_START) {
+                // then compute an updated frame interval
+                pData->currentFrameInterval = buffer->pts - pData->lastPTS;
+                pData->lastPTS = buffer->pts;
+            }
             if ( pData ) {
                 // we want the frame and buffer is not empty
                 if (pData->wantToGrab &&  buffer->length) {
@@ -548,9 +546,9 @@ namespace raspicam {
             //pData->_mutex.unlock()
             // if (hasGrabbed) pData->Thcond.BroadCast(); //wake up waiting client
             // release buffer back to the pool
-            mmal_buffer_header_release ( buffer );
+            mmal_buffer_header_release (buffer);
             // assign a new buffer to the port from the pool
-            if (port->is_enabled) {
+            if (port->is_enabled){
                 MMAL_STATUS_T status;
 
                 new_buffer = mmal_queue_get(pData->pstate->video_pool->queue);
@@ -564,7 +562,7 @@ namespace raspicam {
 
             // force shutter speed
             if (pData->pstate->shutterSpeed!=0)
-                mmal_port_parameter_set_uint32 ( pData->pstate->camera_component->control, MMAL_PARAMETER_SHUTTER_SPEED, pData->pstate->shutterSpeed ) ;
+                mmal_port_parameter_set_uint32 (pData->pstate->camera_component->control, MMAL_PARAMETER_SHUTTER_SPEED, pData->pstate->shutterSpeed) ;
             if (hasGrabbed) pData->Thcond.BroadCast(); //wake up waiting client
 
         }
@@ -593,7 +591,7 @@ namespace raspicam {
 
         void Private_Impl::setVideoStabilization (bool v){
             State.videoStabilisation=v;
-            if (isOpened()) commitVideoStabilization();
+            if (isOpened()) CommitVideoStabilization();
         }
 
         void Private_Impl::setBrightness(unsigned int brightness){
@@ -688,8 +686,8 @@ namespace raspicam {
             if (isOpened()) commitFlips();
         }
 
-        MMAL_PARAM_EXPOSUREMETERINGMODE_T Private_Impl::convertMetering ( RASPICAM_METERING metering ) {
-            switch ( metering ) {
+        MMAL_PARAM_EXPOSUREMETERINGMODE_T Private_Impl::convertMetering(RASPICAM_METERING metering){
+            switch (metering){
             case RASPICAM_METERING_AVERAGE:
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE;
             case RASPICAM_METERING_SPOT:
@@ -702,9 +700,9 @@ namespace raspicam {
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE;
             }
         }
-        MMAL_PARAM_EXPOSUREMODE_T Private_Impl::convertExposure ( RASPICAM_EXPOSURE exposure ) {
+        MMAL_PARAM_EXPOSUREMODE_T Private_Impl::convertExposure(RASPICAM_EXPOSURE exposure){
 
-            switch ( exposure ) {
+            switch (exposure){
             case RASPICAM_EXPOSURE_OFF:
                 return MMAL_PARAM_EXPOSUREMODE_OFF;
             case RASPICAM_EXPOSURE_AUTO:
@@ -736,8 +734,8 @@ namespace raspicam {
             }
         }
 
-        MMAL_PARAM_AWBMODE_T Private_Impl::convertAWB ( RASPICAM_AWB awb ) {
-            switch ( awb ) {
+        MMAL_PARAM_AWBMODE_T Private_Impl::convertAWB(RASPICAM_AWB awb){
+            switch (awb){
             case RASPICAM_AWB_OFF:
                 return MMAL_PARAM_AWBMODE_OFF;
             case RASPICAM_AWB_AUTO:
@@ -763,8 +761,8 @@ namespace raspicam {
             }
         }
 
-        MMAL_PARAM_IMAGEFX_T Private_Impl::convertImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
-            switch ( imageEffect ) {
+        MMAL_PARAM_IMAGEFX_T Private_Impl::convertImageEffect(RASPICAM_IMAGE_EFFECT imageEffect){
+            switch (imageEffect){
             case RASPICAM_IMAGE_EFFECT_NONE:
                 return MMAL_PARAM_IMAGEFX_NONE;
             case RASPICAM_IMAGE_EFFECT_NEGATIVE:
@@ -810,7 +808,7 @@ namespace raspicam {
             }
         }
 
-        void Private_Impl::setFrameRate ( unsigned int frame_rate ) {
+        void Private_Impl::setFrameRate(unsigned int frame_rate){
             State.framerate = frame_rate;
         }
 
@@ -821,14 +819,14 @@ namespace raspicam {
         void Private_Impl::setFramerateDelta(MMAL_RATIONAL_T value) {
             // first get the new framerate required
             int32_t num {State.framerate*value.den};
-            if ( mmal_port_parameter_set_rational ( State.camera_component->control, MMAL_PARAMETER_FRAME_RATE, {
+            if (mmal_port_parameter_set_rational(State.camera_component->control, MMAL_PARAMETER_FRAME_RATE, {
                 num, value.den
-            }) != MMAL_SUCCESS )
+            }) != MMAL_SUCCESS)
                 cout << __func__ << ": Failed to set sharpness parameter.\n";
         }
 
-        int Private_Impl::convertFormat ( RASPICAM_FORMAT fmt ) {
-            switch ( fmt ) {
+        int Private_Impl::convertFormat(RASPICAM_FORMAT fmt){
+            switch (fmt){
             case RASPICAM_FORMAT_RGB:
                 return MMAL_ENCODING_RGB24;
             case RASPICAM_FORMAT_BGR:
@@ -849,20 +847,20 @@ namespace raspicam {
             char serial[1024];
             serial[0]='\0';
             ifstream file ( "/proc/cpuinfo" );
-            if ( !file ) {
+            if (!file) {
                 cerr<<__FILE__<<" "<<__LINE__<<":"<<__func__<<"Could not read /proc/cpuinfo"<<endl;
                 return serial;
             }
             //read lines until find serial
             bool found=false;
-            while ( !file.eof() && !found ) {
+            while (!file.eof() && !found){
                 char line[1024];
-                file.getline ( line,1024 );
-                string str ( line );
+                file.getline(line,1024);
+                string str(line);
                 char aux[100];
 
-                if ( str.find ( "Serial" ) !=string::npos ) {
-                    if ( sscanf ( line,"%s : %s",aux,serial ) !=2 ) {
+                if (str.find("Serial") != string::npos){
+                    if (sscanf(line,"%s : %s",aux,serial) !=2){
                         cerr<<__FILE__<<" "<<__LINE__<<":"<<__func__<<"Error parsing /proc/cpuinfo"<<endl;
                     } else found=true;
                 }
@@ -870,7 +868,7 @@ namespace raspicam {
             return serial;
         }
 
-        void Private_Impl::convertBGR2RGB ( unsigned char *  in_bgr,unsigned char *  out_rgb,int size ) {
+        void Private_Impl::convertBGR2RGB(unsigned char *in_bgr, unsigned char *out_rgb, int size){
             unsigned char *end=in_bgr+size;
             unsigned char *in_ptr=in_bgr;
             while ( in_ptr<end ) {
@@ -879,9 +877,8 @@ namespace raspicam {
             }
             mempcpy ( out_rgb,in_bgr,size );
 
-
         }
-        void Private_Impl::commitAWB_RB() {
+        void Private_Impl::commitAWB_RB(){
            MMAL_PARAMETER_AWB_GAINS_T param = {{MMAL_PARAMETER_CUSTOM_AWB_GAINS,sizeof(param)}, {0,0}, {0,0}};
            param.r_gain.num = (unsigned int)(State.awbg_red * 65536);
            param.b_gain.num = (unsigned int)(State.awbg_blue * 65536);
