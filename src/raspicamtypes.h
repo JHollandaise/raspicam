@@ -38,10 +38,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _RASPICAM_TYPES_H
 #define _RASPICAM_TYPES_H
 
+#include "threadcondition.h"
+
 namespace raspicam {
 
     /**Image formats
-     */
+ */
     enum RASPICAM_FORMAT{
         RASPICAM_FORMAT_YUV420,
         RASPICAM_FORMAT_GRAY,
@@ -126,6 +128,104 @@ namespace raspicam {
         RASPICAM_ENCODING_PNG,
         RASPICAM_ENCODING_RGB
     } RASPICAM_ENCODING;
+
+    /// struct contain camera settings
+    struct MMAL_PARAM_COLOURFX_T
+    {
+        int enable,u,v;       /// Turn colourFX on or off, U and V to use
+    } ;
+    struct PARAM_FLOAT_RECT_T
+    {
+        double x,y,w,h;
+    } ;
+
+
+    /** Structure containing all state information for the current run
+     */
+    struct RASPIVID_STATE
+    {
+        unsigned int width;                          /// Requested width of image
+        unsigned int height;                         /// requested height of image
+        unsigned int framerate;                      /// Requested frame rate (fps)
+        /// the camera output or the encoder output (with compression artifacts)
+        MMAL_COMPONENT_T *cameraComponent;    /// Pointer to the camera component
+        MMAL_POOL_T *videoPool; /// Pointer to the pool of buffers used by encoder output port
+        //camera params
+        int sharpness;             /// -100 to 100
+        int contrast;              /// -100 to 100
+        unsigned int brightness;            ///  0 to 100
+        int saturation;            ///  -100 to 100
+        unsigned int iso;                   ///  TODO : what range?
+        bool videoStabilisation;    /// 0 or 1 (false or true)
+        int exposureCompensation;  /// -10 to +10 ?
+        unsigned int shutterSpeed;
+        RASPICAM_FORMAT captureFmt;
+        RASPICAM_EXPOSURE rpcExposureMode;
+        RASPICAM_METERING rpcExposureMeterMode;
+        RASPICAM_AWB rpcAwbMode;
+        RASPICAM_IMAGE_EFFECT rpcImageEffect;
+        MMAL_PARAMETER_IMAGEFX_PARAMETERS_T imageEffectsParameters;
+        MMAL_PARAM_COLOURFX_T colourEffects;
+        int rotation;              /// 0-359
+        int hFlip;                 /// 0 or 1
+        int vFlip;                 /// 0 or 1
+        PARAM_FLOAT_RECT_T  roi;   /// region of interest to use on the sensor. Normalised [0,1] values in the rect
+        float awbgRed;//white balance red and blue
+        float awbgBlue;
+    };
+
+    //clean buffer
+    template<typename T>
+    class membuf{
+    public:
+        membuf() {
+            data = nullptr;
+            size = 0;
+        }
+        ~membuf() {
+            // nullptr
+            if(data != nullptr) delete []data;
+        }
+        void resize ( size_t s ) {
+            if ( s!=size ) {
+                delete data;
+                size=s;
+                data=new  T[size];
+            }
+        }
+        T *data;
+        size_t size;
+    };
+
+    /** Struct used to pass information in encoder port userdata to callback
+        */
+    struct PORT_USERDATA
+    {
+        PORT_USERDATA(): currentFrameInterval(0), lastPTS(0), wantToGrab(false), pstate(nullptr){}
+
+        void WaitForFrame() {
+            //_mutex.lock();
+            std::unique_lock<std::mutex> lck(_mutex);
+
+            wantToGrab=true;
+//                    _mutex.unlock();
+//                    Thcond.Wait();
+            thcond.Wait(lck); //this will unlock the mutex and wait atomically
+        };
+
+
+
+        int64_t currentFrameInterval;
+        int64_t lastPTS;
+        RASPIVID_STATE *pstate;            /// pointer to our state in case required in callback
+        std::mutex _mutex;
+        ThreadCondition thcond;
+        bool wantToGrab;
+        membuf<unsigned char> _buffData;
+
+    };
+
+
 
 };
 #endif

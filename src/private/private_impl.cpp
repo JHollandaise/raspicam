@@ -36,11 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************/
 
 #include "private_impl.h"
-#include <iostream>
-#include <cstdio>
-#include "mmal/util/mmal_util.h"
-#include "mmal/util/mmal_util_params.h"
-#include "mmal/util/mmal_default_components.h"
 using namespace std;
 namespace raspicam {
     namespace _private{
@@ -80,21 +75,21 @@ namespace raspicam {
             State.ISO = 400;
             State.videoStabilisation = false;
             State.exposureCompensation = 0;
-            State.captureFtm=RASPICAM_FORMAT_RGB;
-            State.rpc_exposureMode = RASPICAM_EXPOSURE_AUTO;
-            State.rpc_exposureMeterMode = RASPICAM_METERING_AVERAGE;
-            State.rpc_awbMode = RASPICAM_AWB_AUTO;
-            State.rpc_imageEffect = RASPICAM_IMAGE_EFFECT_NONE;
+            State.captureFmt=RASPICAM_FORMAT_RGB;
+            State.rpcExposureMode = RASPICAM_EXPOSURE_AUTO;
+            State.rpcExposureMeterMode = RASPICAM_METERING_AVERAGE;
+            State.rpcAwbMode = RASPICAM_AWB_AUTO;
+            State.rpcImageEffect = RASPICAM_IMAGE_EFFECT_NONE;
             State.colourEffects.enable = 0;
             State.colourEffects.u = 128;
             State.colourEffects.v = 128;
             State.rotation = 0;
-            State.hflip = State.vflip = 0;
+            State.hFlip = State.vFlip = 0;
             State.roi.x = State.roi.y = 0.0;
             State.roi.w = State.roi.h = 1.0;
             State.shutterSpeed=0;//auto
-            State.awbg_red=1.0;
-            State.awbg_blue=1.0;
+            State.awbgRed=1.0;
+            State.awbgBlue=1.0;
 
         }
         bool  Private_Impl::open (bool StartCapture){
@@ -130,10 +125,10 @@ namespace raspicam {
             }
             // Send all the buffers to the video port
 
-            int num = mmal_queue_length (State.video_pool->queue);
+            int num = mmal_queue_length (State.videoPool->queue);
             int q;
             for (q=0; q<num; q++) {
-                MMAL_BUFFER_HEADER_T *buffer = mmal_queue_get (State.video_pool->queue);
+                MMAL_BUFFER_HEADER_T *buffer = mmal_queue_get (State.videoPool->queue);
 
                 if (!buffer)
                     cerr<<"Unable to get a required buffer"<<q<<" from pool queue"<<endl;
@@ -181,7 +176,7 @@ namespace raspicam {
             if ( type!=RASPICAM_FORMAT_IGNORE ) {
                 cerr<<__FILE__<<":"<<__LINE__<<" :Private_Impl::retrieve type is not RASPICAM_FORMAT_IGNORE as it should be"<<endl;
             }
-            if(  State.captureFtm ==RASPICAM_FORMAT_YUV420){
+            if(State.captureFmt == RASPICAM_FORMAT_YUV420){
                 auto imagePtr=callback_data._buffData.data;
                 for(int i=0;i<State.height+State.height/2;i++) {
                     memcpy ( data,imagePtr,State.width);
@@ -189,7 +184,7 @@ namespace raspicam {
                     imagePtr+=format->es->video.width;//line stride
                 }
             }
-            else if(  State.captureFtm ==RASPICAM_FORMAT_GRAY){
+            else if(State.captureFmt == RASPICAM_FORMAT_GRAY){
                 auto imagePtr=callback_data._buffData.data;
                 for(int i=0;i<State.height;i++) {
                     memcpy ( data,imagePtr,State.width);
@@ -197,7 +192,7 @@ namespace raspicam {
                     imagePtr+=format->es->video.width;//line stride
                 }
             }
-            else if(  State.captureFtm ==RASPICAM_FORMAT_BGR || State.captureFtm ==RASPICAM_FORMAT_RGB){
+            else if(State.captureFmt == RASPICAM_FORMAT_BGR || State.captureFmt == RASPICAM_FORMAT_RGB){
                 auto imagePtr=callback_data._buffData.data;
                 for(int i=0;i<State.height;i++) {
                     memcpy ( data,imagePtr,State.width*3);
@@ -260,8 +255,8 @@ namespace raspicam {
          *
          */
         void Private_Impl::destroy_camera_component ( RASPIVID_STATE *state ) {
-            if ( state->video_pool )
-                mmal_port_pool_destroy ( state->camera_component->output[MMAL_CAMERA_VIDEO_PORT], state->video_pool );
+            if ( state->videoPool )
+                mmal_port_pool_destroy ( state->camera_component->output[MMAL_CAMERA_VIDEO_PORT], state->videoPool );
             if ( state->camera_component ) {
                 mmal_component_destroy ( state->camera_component );
                 state->camera_component = NULL;
@@ -312,8 +307,8 @@ namespace raspicam {
             // are we using the OPAQUE format here? looks like we are specifying to use RGB rather than opaque
             // so we want to change this to allow piping over to an h.264 encoder, or MJPEG, or over to an EGL via DMA
             // TODO: encoder pipeline configuration
-            format->encoding_variant =   convertFormat ( State.captureFtm );
-            format->encoding = convertFormat ( State.captureFtm );
+            format->encoding_variant =   convertFormat ( State.captureFmt );
+            format->encoding = convertFormat ( State.captureFmt );
             format->es->video.width = VCOS_ALIGN_UP(state->width, 32);
             format->es->video.height = VCOS_ALIGN_UP(state->height, 16);
             // the crop parameters should be some range 0, 65535?
@@ -360,7 +355,7 @@ namespace raspicam {
             if ( !pool ) {
                 cerr<< ( "Failed to create buffer header pool for video output port" );
             }
-            state->video_pool = pool;
+            state->videoPool = pool;
 
 
             /* Enable component */
@@ -426,7 +421,7 @@ namespace raspicam {
         }
 
         void Private_Impl::commitExposure() {
-            MMAL_PARAMETER_EXPOSUREMODE_T exp_mode = {{MMAL_PARAMETER_EXPOSURE_MODE,sizeof ( exp_mode ) }, convertExposure ( State.rpc_exposureMode ) };
+            MMAL_PARAMETER_EXPOSUREMODE_T exp_mode = {{MMAL_PARAMETER_EXPOSURE_MODE,sizeof ( exp_mode ) }, convertExposure ( State.rpcExposureMode ) };
             if ( mmal_port_parameter_set ( State.camera_component->control, &exp_mode.hdr ) != MMAL_SUCCESS )
                 cout << __func__ << ": Failed to set exposure parameter.\n";
         }
@@ -444,30 +439,30 @@ namespace raspicam {
 
 
         void Private_Impl::commitAWB() {
-            MMAL_PARAMETER_AWBMODE_T param = {{MMAL_PARAMETER_AWB_MODE,sizeof ( param ) }, convertAWB ( State.rpc_awbMode ) };
+            MMAL_PARAMETER_AWBMODE_T param = {{MMAL_PARAMETER_AWB_MODE,sizeof ( param ) }, convertAWB ( State.rpcAwbMode ) };
             if ( mmal_port_parameter_set ( State.camera_component->control, &param.hdr ) != MMAL_SUCCESS )
                 cout << __func__ << ": Failed to set AWB parameter.\n";
         }
 
         void Private_Impl::commitImageEffect() {
-            MMAL_PARAMETER_IMAGEFX_T imgFX = {{MMAL_PARAMETER_IMAGE_EFFECT,sizeof ( imgFX ) }, convertImageEffect ( State.rpc_imageEffect ) };
+            MMAL_PARAMETER_IMAGEFX_T imgFX = {{MMAL_PARAMETER_IMAGE_EFFECT,sizeof ( imgFX ) }, convertImageEffect ( State.rpcImageEffect ) };
             if ( mmal_port_parameter_set ( State.camera_component->control, &imgFX.hdr ) != MMAL_SUCCESS )
                 cout << __func__ << ": Failed to set image effect parameter.\n";
         }
 
         void Private_Impl::commitMetering() {
-            MMAL_PARAMETER_EXPOSUREMETERINGMODE_T meter_mode = {{MMAL_PARAMETER_EXP_METERING_MODE, sizeof ( meter_mode ) }, convertMetering ( State.rpc_exposureMeterMode ) };
+            MMAL_PARAMETER_EXPOSUREMETERINGMODE_T meter_mode = {{MMAL_PARAMETER_EXP_METERING_MODE, sizeof ( meter_mode ) }, convertMetering ( State.rpcExposureMeterMode ) };
             if ( mmal_port_parameter_set ( State.camera_component->control, &meter_mode.hdr ) != MMAL_SUCCESS )
                 cout << __func__ << ": Failed to set metering parameter.\n";
         }
 
         void Private_Impl::commitFlips() {
             MMAL_PARAMETER_MIRROR_T mirror = {{MMAL_PARAMETER_MIRROR, sizeof ( MMAL_PARAMETER_MIRROR_T ) }, MMAL_PARAM_MIRROR_NONE};
-            if ( State.hflip && State.vflip )
+            if (State.hFlip && State.vFlip )
                 mirror.value = MMAL_PARAM_MIRROR_BOTH;
-            else if ( State.hflip )
+            else if ( State.hFlip )
                 mirror.value = MMAL_PARAM_MIRROR_HORIZONTAL;
-            else if ( State.vflip )
+            else if ( State.vFlip )
                 mirror.value = MMAL_PARAM_MIRROR_VERTICAL;
             if ( mmal_port_parameter_set ( State.camera_component->output[0], &mirror.hdr ) != MMAL_SUCCESS ||
                     mmal_port_parameter_set ( State.camera_component->output[1], &mirror.hdr ) != MMAL_SUCCESS ||
@@ -483,7 +478,7 @@ namespace raspicam {
          * @return 0 if successful, none-zero if unsuccessful.
          */
         void Private_Impl::commitParameters(){
-            assert (State.camera_component!=0);
+            assert (State.cameraComponent!=0);
             commitSaturation();
             commitSharpness();
             commitContrast();
@@ -491,7 +486,7 @@ namespace raspicam {
             commitISO();
             if (State.shutterSpeed!=0){
                 commitShutterSpeed();
-                State.rpc_exposureMode=RASPICAM_EXPOSURE_FIXEDFPS;
+                State.rpcExposureMode=RASPICAM_EXPOSURE_FIXEDFPS;
                 commitExposure();
             } else commitExposure();
             commitExposureCompensation();
@@ -551,7 +546,7 @@ namespace raspicam {
             if (port->is_enabled){
                 MMAL_STATUS_T status;
 
-                new_buffer = mmal_queue_get(pData->pstate->video_pool->queue);
+                new_buffer = mmal_queue_get(pData->pstate->videoPool->queue);
 
                 if (new_buffer)
                     status = mmal_port_send_buffer(port, new_buffer);
@@ -581,7 +576,7 @@ namespace raspicam {
                 cerr<<__FILE__<<":"<<__LINE__<<":"<<__func__<<": can not change format with camera already opened"<<endl;
                 return;
             }
-            State.captureFtm = fmt;
+            State.captureFmt = fmt;
         }
 
         void Private_Impl::setCaptureSize(unsigned int width, unsigned int height){
@@ -646,27 +641,27 @@ namespace raspicam {
 
 
         void Private_Impl::setAWB_RB(float red_g, float blue_g){
-            State.awbg_blue = blue_g;
-            State.awbg_red = red_g;
+            State.awbgBlue = blue_g;
+            State.awbgRed = red_g;
             if (isOpened()) commitAWB_RB();
         }
         void Private_Impl::setExposure(RASPICAM_EXPOSURE exposure){
-            State.rpc_exposureMode = exposure;
+            State.rpcExposureMode = exposure;
             if (isOpened()) commitExposure();
         }
 
         void Private_Impl::setAWB(RASPICAM_AWB awb){
-            State.rpc_awbMode = awb;
+            State.rpcAwbMode = awb;
             if (isOpened()) commitAWB();
         }
 
         void Private_Impl::setImageEffect(RASPICAM_IMAGE_EFFECT imageEffect){
-            State.rpc_imageEffect = imageEffect;
+            State.rpcImageEffect = imageEffect;
             if (isOpened()) commitImageEffect();
         }
 
         void Private_Impl::setMetering(RASPICAM_METERING metering){
-            State.rpc_exposureMeterMode = metering;
+            State.rpcExposureMeterMode = metering;
             if (isOpened()) commitMetering();
         }
         void Private_Impl::setExposureCompensation(int val){
@@ -677,12 +672,12 @@ namespace raspicam {
         }
 
         void Private_Impl::setHorizontalFlip(bool hFlip){
-            State.hflip = hFlip;
+            State.hFlip = hFlip;
             if (isOpened()) commitFlips();
         }
 
         void Private_Impl::setVerticalFlip(bool vFlip){
-            State.vflip = vFlip;
+            State.vFlip = vFlip;
             if (isOpened()) commitFlips();
         }
 
@@ -816,11 +811,11 @@ namespace raspicam {
 #if VIDEO_FRAME_RATE_DEN != 1
 #   error "fix framerate setting function to account for the different denominator"
 #endif
-        void Private_Impl::setFramerateDelta(MMAL_RATIONAL_T value) {
+        void Private_Impl::setFramerateDelta(MMAL_RATIONAL_T setpoint) {
             // first get the new framerate required
-            value.num += State.framerate*value.den;
+            setpoint.num += State.framerate * setpoint.den;
             if (mmal_port_parameter_set_rational(State.camera_component->output[MMAL_CAMERA_VIDEO_PORT],
-                                                      MMAL_PARAMETER_FRAME_RATE, value) != MMAL_SUCCESS)
+                                                 MMAL_PARAMETER_FRAME_RATE, setpoint) != MMAL_SUCCESS)
                 cout << __func__ << ": Failed to set framerate Delta parameter.\n";
         }
 
@@ -879,8 +874,8 @@ namespace raspicam {
         }
         void Private_Impl::commitAWB_RB(){
            MMAL_PARAMETER_AWB_GAINS_T param = {{MMAL_PARAMETER_CUSTOM_AWB_GAINS,sizeof(param)}, {0,0}, {0,0}};
-           param.r_gain.num = (unsigned int)(State.awbg_red * 65536);
-           param.b_gain.num = (unsigned int)(State.awbg_blue * 65536);
+           param.r_gain.num = (unsigned int)(State.awbgRed * 65536);
+           param.b_gain.num = (unsigned int)(State.awbgBlue * 65536);
            param.r_gain.den = param.b_gain.den = 65536;
            if ( mmal_port_parameter_set(State.camera_component->control, &param.hdr) != MMAL_SUCCESS )
                 cout << __func__ << ": Failed to set AWBG gains parameter.\n";

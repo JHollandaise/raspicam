@@ -195,7 +195,7 @@ int main (int argc, char **argv) {
     processCommandLine(argc,argv,Camera);
     cout<<"Connecting to camera"<<endl;
     
-    if (!Camera.open()){
+    if (!Camera.Open()){
         cerr<<"Error opening camera"<<endl;
         return -1;
     }
@@ -208,7 +208,7 @@ int main (int argc, char **argv) {
     size_t i(0);
     timer.start();
     do{
-        Camera.grab();
+        Camera.Grab();
         Camera.retrieve (data);
         if (!doTestSpeedOnly) {
             if (i%5==0) 	  cout<<"\r capturing ..."<<i<<"/"<<nFramesCaptured<<std::flush;
@@ -230,7 +230,7 @@ int main (int argc, char **argv) {
 
     cerr << timer.getSecs() << " seconds for " << nFramesCaptured << "  frames : FPS " << ((float)(nFramesCaptured) / timer.getSecs()) <<endl;
 
-    Camera.release();
+    Camera.Release();
 
 
 }

@@ -38,7 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _Private_RaspiCam_IMPL_H
 #define _Private_RaspiCam_IMPL_H
 #include "mmal/mmal.h"
-//#include "mmal_connection.h"
 #include <mutex>
 #include <string>
 #include "raspicamtypes.h"
@@ -52,34 +51,6 @@ namespace raspicam {
          */
         class Private_Impl
         {
-            /** Struct used to pass information in encoder port userdata to callback
-            */
-            struct PORT_USERDATA
-            {
-                PORT_USERDATA(): currentFrameInterval(0), lastPTS(0), wantToGrab(false), pstate(nullptr){}
-
-                void waitForFrame() {
-                    //_mutex.lock();
-                    std::unique_lock<std::mutex> lck(_mutex);
-
-                    wantToGrab=true;
-//                    _mutex.unlock();
-//                    Thcond.Wait();
-                    Thcond.Wait(lck); //this will unlock the mutex and wait atomically
-                };
-
-
-
-                int64_t currentFrameInterval;
-                int64_t lastPTS;
-                RASPIVID_STATE *pstate;            /// pointer to our state in case required in callback
-                 std::mutex _mutex;
-                ThreadCondition Thcond;
-                bool wantToGrab;
-                membuf<unsigned char> _buffData;
-
-            };
-
             public:
 
             /**Constructor
@@ -143,7 +114,7 @@ namespace raspicam {
             void setAWB_RB ( float red,float blue );//ranges [0,1]
             void setFrameRate ( unsigned int frame_rate ) ;
 
-            void setFramerateDelta (MMAL_RATIONAL_T value);
+            void setFramerateDelta (MMAL_RATIONAL_T setpoint);
 
             void setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect );
             void setMetering ( RASPICAM_METERING metering );
@@ -155,7 +126,7 @@ namespace raspicam {
               */
             void setShutterSpeed ( unsigned int shutter ); //currently not  supported
 
-            RASPICAM_FORMAT  getFormat() const {return State.captureFtm;}
+            RASPICAM_FORMAT  getFormat() const {return State.captureFmt;}
             //Accessors
             unsigned int getWidth() const
             {
@@ -202,32 +173,32 @@ namespace raspicam {
 
             RASPICAM_EXPOSURE getExposure() const
             {
-                return State.rpc_exposureMode;
+                return State.rpcExposureMode;
             }
             RASPICAM_AWB getAWB() const
             {
-                return State.rpc_awbMode;
+                return State.rpcAwbMode;
             }
 
-            float getAWBG_red(){return State.awbg_red;}
+            float getAWBG_red(){return State.awbgRed;}
 
-            float getAWBG_blue(){return State.awbg_blue;}
+            float getAWBG_blue(){return State.awbgBlue;}
 
             RASPICAM_IMAGE_EFFECT getImageEffect() const
             {
-                return State.rpc_imageEffect;
+                return State.rpcImageEffect;
             }
             RASPICAM_METERING getMetering() const
             {
-                return State.rpc_exposureMeterMode;
+                return State.rpcExposureMeterMode;
             }
             bool isHorizontallyFlipped() const
             {
-                return State.hflip;
+                return State.hFlip;
             }
             bool isVerticallyFlipped() const
             {
-                return State.vflip;
+                return State.vFlip;
             }
 
 

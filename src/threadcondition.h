@@ -46,8 +46,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "exceptions.h"
 namespace raspicam {
-    namespace _private
-    {
         /** @brief This class implements a condition to stop a thread until the
          * condition is reached.
          * @ingroup threads */
@@ -69,6 +67,5 @@ namespace raspicam {
             bool ready  ;
 
         };
-    }
-}		/* -----  end of namespace gu  ----- */
+}
 #endif
