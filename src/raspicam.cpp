@@ -125,21 +125,21 @@ namespace raspicam {
     void RaspiCam::setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
         _impl->setImageEffect ( imageEffect );
     }
-    void RaspiCam::setMetering ( RASPICAM_METERING metering ) {
-        _impl->setMetering ( metering );
+    void RaspiCam::setMetering (RASPICAM_METERING metering){
+        _impl->setMetering (metering);
     }
-    void RaspiCam::setHorizontalFlip ( bool hFlip ) {
-        _impl->setHorizontalFlip ( hFlip );
+    void RaspiCam::setHorizontalFlip (bool hFlip){
+        _impl->setHorizontalFlip (hFlip);
     }
-    void RaspiCam::setVerticalFlip ( bool vFlip ) {
-        _impl->setVerticalFlip ( vFlip );
+    void RaspiCam::setVerticalFlip (bool vFlip){
+        _impl->setVerticalFlip (vFlip);
     }
-   void RaspiCam::setFrameRate( unsigned int  fr) {  _impl->setFrameRate(fr);}
+   void RaspiCam::setFrameRate(unsigned int fr){_impl->setFrameRate(fr);}
 
-   void RaspiCam::setFramerateDelta(MMAL_RATIONAL_T setpoint) { _impl->setFramerateDelta(setpoint); }
+   void RaspiCam::setFramerateDelta(MMAL_RATIONAL_T setpoint){_impl->setFramerateDelta(setpoint);}
 
     
-    RASPICAM_FORMAT RaspiCam::getFormat()const{return _impl->getFormat( ); }
+    RASPICAM_FORMAT RaspiCam::getFormat() const{return _impl->getFormat();}
     unsigned int RaspiCam::getWidth() const{return _impl->getWidth() ;}
     unsigned int RaspiCam::getHeight() const{return _impl->getHeight()  ;}
     unsigned int RaspiCam::getBrightness() const{return _impl->getBrightness()  ;}

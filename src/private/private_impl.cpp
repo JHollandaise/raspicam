@@ -814,15 +814,14 @@ namespace raspicam {
 
 // here we are assuming that the framerate is always just an integer value, so check VIDEO_FRAMRE_RATE_DEN is def as 1
 #if VIDEO_FRAME_RATE_DEN != 1
-#   error "fix your framerate setting function to account for the different denominator"
+#   error "fix framerate setting function to account for the different denominator"
 #endif
         void Private_Impl::setFramerateDelta(MMAL_RATIONAL_T value) {
             // first get the new framerate required
-            int32_t num {State.framerate*value.den};
-            if (mmal_port_parameter_set_rational(State.camera_component->control, MMAL_PARAMETER_FRAME_RATE, {
-                num, value.den
-            }) != MMAL_SUCCESS)
-                cout << __func__ << ": Failed to set sharpness parameter.\n";
+            value.num += State.framerate*value.den;
+            if (mmal_port_parameter_set_rational(State.camera_component->output[MMAL_CAMERA_VIDEO_PORT],
+                                                      MMAL_PARAMETER_FRAME_RATE, value) != MMAL_SUCCESS)
+                cout << __func__ << ": Failed to set framerate Delta parameter.\n";
         }
 
         int Private_Impl::convertFormat(RASPICAM_FORMAT fmt){
@@ -841,8 +840,8 @@ namespace raspicam {
         }
 
 
-        //Returns an id of the camera. We assume the camera id is the one of the raspberry
-        //the id is obtained using raspberry serial number obtained in /proc/cpuinfo
+        // Returns an id of the camera. We assume the camera id is the one of the raspberry
+        // the id is obtained using raspberry serial number obtained in /proc/cpuinfo
         string Private_Impl::getId() const{
             char serial[1024];
             serial[0]='\0';

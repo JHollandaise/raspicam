@@ -176,59 +176,59 @@ void saveImage ( string filepath,unsigned char *data,raspicam::RaspiCam &Camera 
         outFile<<"P7\n";
     }
     outFile<<Camera.getWidth() <<" "<<Camera.getHeight() <<" 255\n";
-    outFile.write ( ( char* ) data,Camera.getImageBufferSize() );
+    outFile.write ((char*)data, Camera.getImageBufferSize());
 }
 
 
-int main ( int argc,char **argv ) {
-    if ( argc==1 ) {
+int main (int argc, char **argv) {
+    if (argc==1) {
         cerr<<"Usage (-help for help)"<<endl;
     }
 
-    if ( findParam ( "-help",argc,argv ) !=-1) {
+    if ( findParam ("-help", argc, argv) !=-1) {
         showUsage();
         return -1;
     }
 
   
     raspicam::RaspiCam Camera;
-    processCommandLine ( argc,argv,Camera );
+    processCommandLine(argc,argv,Camera);
     cout<<"Connecting to camera"<<endl;
     
-    if ( !Camera.open() ) {
+    if (!Camera.open()){
         cerr<<"Error opening camera"<<endl;
         return -1;
     }
-    Camera.setFramerateDelta({4,1});
-    cout<<"Connected to camera ="<<Camera.getId() <<" bufs="<<Camera.getImageBufferSize( )<<endl;
-    unsigned char *data=new unsigned char[  Camera.getImageBufferSize( )];
+    // Camera.setFramerateDelta({10,1});
+    cout << "Connected to camera =" << Camera.getId() << " bufs=" << Camera.getImageBufferSize() << endl;
+    auto *data=new unsigned char[Camera.getImageBufferSize()];
     Timer timer;
 
-    cout<<"Capturing...."<<endl;
-    size_t i=0;
+    cout << "Capturing...." << endl;
+    size_t i(0);
     timer.start();
     do{
         Camera.grab();
-        Camera.retrieve ( data );
-        if ( !doTestSpeedOnly ) {
-            if ( i%5==0 ) 	  cout<<"\r capturing ..."<<i<<"/"<<nFramesCaptured<<std::flush;
-            if ( i%30==0 && i!=0  && nFramesCaptured>0 ) { //save image if not in inifite loop
+        Camera.retrieve (data);
+        if (!doTestSpeedOnly) {
+            if (i%5==0) 	  cout<<"\r capturing ..."<<i<<"/"<<nFramesCaptured<<std::flush;
+            if (i%30==0 && i!=0  && nFramesCaptured>0) { //save image if not in inifite loop
                 std::stringstream fn;
                 fn<<"image";
                 if (i<10) fn<<"0";
                 fn<<i<<".ppm";
-                saveImage ( fn.str(),data,Camera );
-                cerr<<"Saving "<<fn.str()<<endl;
+                saveImage (fn.str(),data,Camera);
+                cerr << "Saving "<< fn.str() << endl;
             }
         }
     }while(++i<nFramesCaptured || nFramesCaptured==0);//stops when nFrames captured or at infinity lpif nFramesCaptured<0
 
     timer.end();
-    if ( !doTestSpeedOnly )    cout<<endl<<"Images saved in imagexx.ppm"<<endl;
+    if (!doTestSpeedOnly)    cout << endl << "Images saved in imagexx.ppm"<<endl;
 
 
 
-    cerr<< timer.getSecs()<< " seconds for "<< nFramesCaptured<< "  frames : FPS " << ( ( float ) ( nFramesCaptured ) / timer.getSecs() ) <<endl;
+    cerr << timer.getSecs() << " seconds for " << nFramesCaptured << "  frames : FPS " << ((float)(nFramesCaptured) / timer.getSecs()) <<endl;
 
     Camera.release();
 
