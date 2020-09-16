@@ -383,7 +383,27 @@ namespace raspicam {
     //the id is obtained using raspberry serial number obtained in /proc/cpuinfo
     std::string RaspiCam::GetId() const { return _impl->getId(); }
 
-
+    void RaspiCam::CommitParameters() {
+        assert(state.cameraComponent != nullptr);
+        CommitSaturation();
+        CommitSharpness();
+        CommitContrast();
+        CommitBrightness();
+        CommitISO();
+        if (state.shutterSpeed!=0){
+            CommitShutterSpeed();
+            state.rpcExposureMode=RASPICAM_EXPOSURE_FIXEDFPS;
+            CommitExposure();
+        } else CommitExposure();
+        CommitExposureCompensation();
+        CommitMetering();
+        CommitImageEffect();
+        CommitRotation();
+        CommitFlips();
+        CommitVideoStabilization();
+        CommitAWB();
+        CommitAWB_RB();
+    }
 
     // TODO: why are we passing a pointer to a member??
     MMAL_COMPONENT_T *RaspiCam::CreateCameraComponent(RASPIVID_STATE *state) {
