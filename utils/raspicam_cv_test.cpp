@@ -120,7 +120,7 @@ int main ( int argc,char **argv ) {
     raspicam::RaspiCam_Cv Camera;
     processCommandLine ( argc,argv,Camera );
     cout<<"Connecting to camera"<<endl;
-    if ( !Camera.open() ) {
+    if ( !Camera.Open() ) {
         cerr<<"Error opening camera"<<endl;
         return -1;
     }
@@ -133,7 +133,7 @@ int main ( int argc,char **argv ) {
     double time_=cv::getTickCount();
 
     for ( int i=0; i<nCount; i++ ) {
-        Camera.grab();
+        Camera.Grab();
         Camera.retrieve ( image );
         if ( !doTestSpeedOnly ) {
             if ( i%5==0 ) 	  cout<<"\r capturing ..."<<i<<"/"<<nCount<<std::flush;
@@ -144,6 +144,6 @@ int main ( int argc,char **argv ) {
     if ( !doTestSpeedOnly )  cout<<endl<<"Images saved in imagexx.jpg"<<endl;
     double secondsElapsed= double ( cv::getTickCount()-time_ ) /double ( cv::getTickFrequency() ); //time in second
     cout<< secondsElapsed<<" seconds for "<< nCount<<"  frames : FPS = "<< ( float ) ( ( float ) ( nCount ) /secondsElapsed ) <<endl;
-    Camera.release();
+    Camera.Release();
 
 }

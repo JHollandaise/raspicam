@@ -96,33 +96,33 @@ if ( str=="HORIZON" ) return raspicam::RASPICAM_AWB_HORIZON;
 return raspicam::RASPICAM_AWB_AUTO;
 }
 void processCommandLine ( int argc,char **argv,raspicam::RaspiCam &Camera ) {
-    Camera.setWidth ( getParamVal ( "-w",argc,argv,1280 ) );
-    Camera.setHeight ( getParamVal ( "-h",argc,argv,960 ) );
-    Camera.setBrightness ( getParamVal ( "-br",argc,argv,50 ) );
+    Camera.SetWidth ( getParamVal ( "-w",argc,argv,1280 ) );
+    Camera.SetHeight ( getParamVal ( "-h",argc,argv,960 ) );
+    Camera.SetBrightness ( getParamVal ( "-br",argc,argv,50 ) );
 
-    Camera.setSharpness ( getParamVal ( "-sh",argc,argv,0 ) );
-    Camera.setContrast ( getParamVal ( "-co",argc,argv,0 ) );
-    Camera.setSaturation ( getParamVal ( "-sa",argc,argv,0 ) );
-    Camera.setShutterSpeed( getParamVal ( "-ss",argc,argv,0 ) );
-    Camera.setISO ( getParamVal ( "-iso",argc,argv ,400 ) );
-    Camera.setFrameRate(getParamVal ( "-fr",argc,argv ,30));
+    Camera.SetSharpness ( getParamVal ( "-sh",argc,argv,0 ) );
+    Camera.SetContrast ( getParamVal ( "-co",argc,argv,0 ) );
+    Camera.SetSaturation ( getParamVal ( "-sa",argc,argv,0 ) );
+    Camera.SetShutterSpeed( getParamVal ( "-ss",argc,argv,0 ) );
+    Camera.SetISO ( getParamVal ( "-iso",argc,argv ,400 ) );
+    Camera.SetFrameRate(getParamVal ( "-fr",argc,argv ,30));
     if ( findParam ( "-vs",argc,argv ) !=-1 )
-        Camera.setVideoStabilization ( true );
-    Camera.setExposureCompensation ( getParamVal ( "-ec",argc,argv ,0 ) );
+        Camera.SetVideoStabilization ( true );
+    Camera.SetExposureCompensation ( getParamVal ( "-ec",argc,argv ,0 ) );
 
     if ( findParam ( "-gr",argc,argv ) !=-1 )
-      Camera.setFormat(raspicam::RASPICAM_FORMAT_GRAY);
+      Camera.SetFormat(raspicam::RASPICAM_FORMAT_GRAY);
     if ( findParam ( "-yuv",argc,argv ) !=-1 ) 
-      Camera.setFormat(raspicam::RASPICAM_FORMAT_YUV420);
+      Camera.SetFormat(raspicam::RASPICAM_FORMAT_YUV420);
     if ( findParam ( "-test_speed",argc,argv ) !=-1 )
         doTestSpeedOnly=true;
     int idx;
     if ( ( idx=findParam ( "-ex",argc,argv ) ) !=-1 )
-        Camera.setExposure ( getExposureFromString ( argv[idx+1] ) );
+        Camera.SetExposure ( getExposureFromString ( argv[idx+1] ) );
     if ( ( idx=findParam ( "-awb",argc,argv ) ) !=-1 )
-        Camera.setAWB( getAwbFromString ( argv[idx+1] ) );
+        Camera.SetAWB( getAwbFromString ( argv[idx+1] ) );
     nFramesCaptured=getParamVal("-nframes",argc,argv,100);
-    Camera.setAWB_RB(getParamVal("-awb_b",argc,argv ,1), getParamVal("-awb_g",argc,argv ,1));
+    Camera.SetAWB_RB(getParamVal("-awb_b",argc,argv ,1), getParamVal("-awb_g",argc,argv ,1));
 
 }
 void showUsage() {
@@ -168,15 +168,15 @@ public:
 
 void saveImage ( string filepath,unsigned char *data,raspicam::RaspiCam &Camera ) {
     std::ofstream outFile ( filepath.c_str(),std::ios::binary );
-    if ( Camera.getFormat()==raspicam::RASPICAM_FORMAT_BGR ||  Camera.getFormat()==raspicam::RASPICAM_FORMAT_RGB ) {
+    if ( Camera.GetFormat()==raspicam::RASPICAM_FORMAT_BGR ||  Camera.GetFormat()==raspicam::RASPICAM_FORMAT_RGB ) {
         outFile<<"P6\n";
-    } else if ( Camera.getFormat()==raspicam::RASPICAM_FORMAT_GRAY ) {
+    } else if ( Camera.GetFormat()==raspicam::RASPICAM_FORMAT_GRAY ) {
         outFile<<"P5\n";
-    } else if ( Camera.getFormat()==raspicam::RASPICAM_FORMAT_YUV420 ) { //made up format
+    } else if ( Camera.GetFormat()==raspicam::RASPICAM_FORMAT_YUV420 ) { //made up format
         outFile<<"P7\n";
     }
-    outFile<<Camera.getWidth() <<" "<<Camera.getHeight() <<" 255\n";
-    outFile.write ((char*)data, Camera.getImageBufferSize());
+    outFile<<Camera.GetWidth() <<" "<<Camera.GetHeight() <<" 255\n";
+    outFile.write ((char*)data, Camera.GetImageBufferSize());
 }
 
 
@@ -200,8 +200,8 @@ int main (int argc, char **argv) {
         return -1;
     }
     // Camera.setFramerateDelta({10,1});
-    cout << "Connected to camera =" << Camera.getId() << " bufs=" << Camera.getImageBufferSize() << endl;
-    auto *data=new unsigned char[Camera.getImageBufferSize()];
+    cout << "Connected to camera =" << Camera.GetId() << " bufs=" << Camera.GetImageBufferSize() << endl;
+    auto *data=new unsigned char[Camera.GetImageBufferSize()];
     Timer timer;
 
     cout << "Capturing...." << endl;
@@ -209,7 +209,7 @@ int main (int argc, char **argv) {
     timer.start();
     do{
         Camera.Grab();
-        Camera.retrieve (data);
+        Camera.Retrieve (data);
         if (!doTestSpeedOnly) {
             if (i%5==0) 	  cout<<"\r capturing ..."<<i<<"/"<<nFramesCaptured<<std::flush;
             if (i%30==0 && i!=0  && nFramesCaptured>0) { //save image if not in inifite loop

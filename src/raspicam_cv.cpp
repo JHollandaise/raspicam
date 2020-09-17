@@ -36,11 +36,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************/
 
 #include "raspicam_cv.h"
-#include "private/private_impl.h"
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 #include "cvversioning.h"
 #include "scaler.h"
+
 namespace raspicam {
     RaspiCam_Cv::RaspiCam_Cv() {
 
@@ -57,8 +57,8 @@ namespace raspicam {
      */
     void RaspiCam_Cv::retrieve ( cv::Mat& image ) {
         //here we go!
-        image.create ( RaspiCam::getHeight(),RaspiCam::getWidth(),imgFormat );
-        RaspiCam:: retrieve ( image.ptr<uchar> ( 0 ));
+        image.create ( RaspiCam::GetHeight(),RaspiCam::GetWidth(),imgFormat );
+        RaspiCam::Retrieve ( image.ptr<uchar> ( 0 ));
 //        if(imgFormat==CV_8UC1)
 //            RaspiCam::retrieve ( image.ptr<uchar> ( 0 ));
 //        else{
@@ -76,9 +76,9 @@ namespace raspicam {
         switch ( propId ) {
 
         case CV_CAP_PROP_FRAME_WIDTH :
-            return RaspiCam::getWidth();
+            return RaspiCam::GetWidth();
         case CV_CAP_PROP_FRAME_HEIGHT :
-            return RaspiCam::getHeight();
+            return RaspiCam::GetHeight();
         case CV_CAP_PROP_FPS:
             return 30;
         case CV_CAP_PROP_FORMAT :
@@ -86,33 +86,33 @@ namespace raspicam {
         case CV_CAP_PROP_MODE :
             return 0;
         case CV_CAP_PROP_BRIGHTNESS :
-            return RaspiCam::getBrightness();
+            return RaspiCam::GetBrightness();
         case CV_CAP_PROP_CONTRAST :
-            return Scaler::scale ( -100,100,0,100,  RaspiCam::getContrast() );
+            return Scaler::scale ( -100,100,0,100,  RaspiCam::GetContrast() );
         case CV_CAP_PROP_SATURATION :
-            return  Scaler::scale ( -100,100,0,100, RaspiCam::getSaturation() );;
+            return  Scaler::scale ( -100,100,0,100, RaspiCam::GetSaturation() );;
 //     case CV_CAP_PROP_HUE : return _camRaspiCam::getSharpness();
         case CV_CAP_PROP_GAIN :
-            return  Scaler::scale ( 0,800,0,100, RaspiCam::getISO() );
+            return  Scaler::scale ( 0,800,0,100, RaspiCam::GetISO() );
         case CV_CAP_PROP_EXPOSURE :
-            if ( RaspiCam::getShutterSpeed() ==0 )
+            if ( RaspiCam::GetShutterSpeed() ==0 )
                 return -1;//auto
-            else return Scaler::scale (0,330000, 0,100, RaspiCam::getShutterSpeed() )  ;
+            else return Scaler::scale (0,330000, 0,100, RaspiCam::GetShutterSpeed() )  ;
        break;
         case CV_CAP_PROP_CONVERT_RGB :
             return ( imgFormat==CV_8UC3 );
         case CV_CAP_PROP_WHITE_BALANCE_RED_V:
-            if( RaspiCam::getAWB()== raspicam::RASPICAM_AWB_AUTO)
+            if( RaspiCam::GetAWB()== raspicam::RASPICAM_AWB_AUTO)
                 return -1;//auto
             else
-                return RaspiCam::getAWBG_red() / 100.0f;
+                return RaspiCam::GetAWBG_red() / 100.0f;
         break;
 
         case CV_CAP_PROP_WHITE_BALANCE_BLUE_U:
-            if( RaspiCam::getAWB()== raspicam::RASPICAM_AWB_AUTO)
+            if( RaspiCam::GetAWB()== raspicam::RASPICAM_AWB_AUTO)
                 return -1;//auto
             else
-                return RaspiCam::getAWBG_blue() / 100.0f;
+                return RaspiCam::GetAWBG_blue() / 100.0f;
         break;
         default :
             return -1;
@@ -126,23 +126,23 @@ namespace raspicam {
 
         switch ( propId ) {
         case CV_CAP_PROP_FPS :
-            RaspiCam::setFrameRate( value );
+            RaspiCam::SetFrameRate( value );
             break;
 
         case CV_CAP_PROP_FRAME_WIDTH :
-            RaspiCam::setWidth ( value );
+            RaspiCam::SetWidth ( value );
             break;
         case CV_CAP_PROP_FRAME_HEIGHT :
-            RaspiCam::setHeight ( value );
+            RaspiCam::SetHeight ( value );
             break;
         case CV_CAP_PROP_FORMAT :{
             bool res=true;
             if ( value==CV_8UC1  ){
-                RaspiCam::setFormat(RASPICAM_FORMAT_GRAY);
+                RaspiCam::SetFormat(RASPICAM_FORMAT_GRAY);
                 imgFormat=value;
             }
             else if (value==CV_8UC3){
-                RaspiCam::setFormat(RASPICAM_FORMAT_BGR);
+                RaspiCam::SetFormat(RASPICAM_FORMAT_BGR);
                 imgFormat=value;
             }
             else res=false;//error int format
@@ -152,24 +152,24 @@ namespace raspicam {
             return false;
             break;
         case CV_CAP_PROP_BRIGHTNESS :
-            RaspiCam::setBrightness ( value );
+            RaspiCam::SetBrightness ( value );
             break;
         case CV_CAP_PROP_CONTRAST :
-            RaspiCam::setContrast ( Scaler::scale ( 0,100,-100,100, value ) );
+            RaspiCam::SetContrast ( Scaler::scale ( 0,100,-100,100, value ) );
             break;
         case CV_CAP_PROP_SATURATION :
-            RaspiCam::setSaturation ( Scaler::scale ( 0,100,-100,100, value ) );
+            RaspiCam::SetSaturation ( Scaler::scale ( 0,100,-100,100, value ) );
             break;
 //     case CV_CAP_PROP_HUE : return _camRaspiCam::getSharpness();
         case CV_CAP_PROP_GAIN :
-            RaspiCam::setISO ( Scaler::scale ( 0,100,0,800, value ) );
+            RaspiCam::SetISO ( Scaler::scale ( 0,100,0,800, value ) );
             break;
         case CV_CAP_PROP_EXPOSURE :
             if ( value>0 && value<=100 ) {
-                RaspiCam::setShutterSpeed ( Scaler::scale ( 0,100,0,330000, value ) );
+                RaspiCam::SetShutterSpeed ( Scaler::scale ( 0,100,0,330000, value ) );
             } else {
-                RaspiCam::setExposure ( RASPICAM_EXPOSURE_AUTO );
-                RaspiCam::setShutterSpeed ( 0 );
+                RaspiCam::SetExposure ( RASPICAM_EXPOSURE_AUTO );
+                RaspiCam::SetShutterSpeed ( 0 );
             }
             break;
         case CV_CAP_PROP_CONVERT_RGB :
@@ -177,23 +177,23 @@ namespace raspicam {
             break;
         case CV_CAP_PROP_WHITE_BALANCE_RED_V:
             if ( value>0 && value<=100 ) {
-                float valblue=RaspiCam::getAWBG_blue();
-                RaspiCam::setAWB(raspicam::RASPICAM_AWB_OFF);
-                RaspiCam::setAWB_RB(value*100, valblue );
+                float valblue=RaspiCam::GetAWBG_blue();
+                RaspiCam::SetAWB(raspicam::RASPICAM_AWB_OFF);
+                RaspiCam::SetAWB_RB(value*100, valblue );
             }
             else  {
-                RaspiCam::setAWB(raspicam::RASPICAM_AWB_AUTO);
+                RaspiCam::SetAWB(raspicam::RASPICAM_AWB_AUTO);
             };
         break;
 
         case CV_CAP_PROP_WHITE_BALANCE_BLUE_U:
             if ( value>0 && value<=100 ) {
-                float valred=RaspiCam::getAWBG_red();
-                RaspiCam::setAWB(raspicam::RASPICAM_AWB_OFF);
-                RaspiCam::setAWB_RB(valred, value*100 );
+                float valred = RaspiCam::GetAWBG_red();
+                RaspiCam::SetAWB(raspicam::RASPICAM_AWB_OFF);
+                RaspiCam::SetAWB_RB(valred, value*100 );
             }
             else  {
-                RaspiCam::setAWB(raspicam::RASPICAM_AWB_AUTO);
+                RaspiCam::SetAWB(raspicam::RASPICAM_AWB_AUTO);
             };
         break;
 
@@ -205,7 +205,7 @@ namespace raspicam {
 
     }
     std::string RaspiCam_Cv::getId() const{
-        return RaspiCam::getId();
+        return RaspiCam::GetId();
     }
 
 }

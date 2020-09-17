@@ -37,35 +37,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef _RASPICAM_THREADTHREADCONDITION_H
-#define _RASPICAM_THREADTHREADCONDITION_H
-#include <string>
-#include <thread>             // std::thread
-#include <mutex>              // std::mutex, std::unique_lock
-#include <condition_variable> // std::condition_variable
+#include "threadcondition.h"
 
-#include "exceptions.h"
 namespace raspicam {
-        /** @brief This class implements a condition to stop a thread until the
-         * condition is reached.
-         * @ingroup threads */
-        class ThreadCondition
-        {
-            public:
-            ThreadCondition() throw ( raspicam::Exception );
+////////////////////////////////
+//
+////////////////////////////////
+        ThreadCondition::ThreadCondition() throw ( raspicam::Exception ) {
+            ready=false;
+        }
 
-            /**The thread that call this function waits untils the condition is activated */
-            void Wait(std::unique_lock<std::mutex>& lck) throw ( raspicam::Exception );
+////////////////////////////////
+//
+//
+////////////////////////////////
+        void ThreadCondition::Wait(std::unique_lock<std::mutex>& lck) throw ( raspicam::Exception ) {
+            ready=false;
+             while ( !ready ) cv.wait ( lck );
+        }
 
- 
-            /**Wake up all threads waiting for this condition */
-            void BroadCast() throw ( raspicam::Exception );
+////////////////////////////////
+//
+//
+////////////////////////////////
+        void ThreadCondition::BroadCast() throw ( raspicam::Exception ) {
+            ready = true;
+            cv.notify_all();
 
-            private:
-            std::mutex mtx;
-            std::condition_variable cv;
-            bool ready  ;
+        }
 
-        };
 }
-#endif
+

@@ -17,11 +17,11 @@ ENDIF()
 
 
 INCLUDE_DIRECTORIES(.)
-SET(private_hdrs_base "private/private_types.h  private/private_impl.h exceptions.h private/threadcondition.h ")
+SET(private_hdrs_base "private/threadcondition.h private/exceptions.h")
 SET(private_still_hdrs_base "private_still/private_still_types.h  private/private_still_impl.h")
 
 SET(public_hdrs_base raspicamtypes.h raspicam.h raspicam_still.h cvversioning.h)
-SET(srcs_base ${public_hdrs_base} ${srcs_base} raspicam.cpp raspicam_still.cpp  private/private_impl.cpp threadcondition.cpp private_still/private_still_impl.cpp)
+SET(srcs_base ${public_hdrs_base} ${srcs_base} raspicam.cpp raspicam_still.cpp private/threadcondition.cpp private_still/private_still_impl.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} )
 
