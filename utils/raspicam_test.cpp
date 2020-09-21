@@ -166,33 +166,33 @@ public:
 
 };
 
-void saveImage ( string filepath,unsigned char *data,raspicam::RaspiCam &Camera ) {
-    std::ofstream outFile ( filepath.c_str(),std::ios::binary );
-    if ( Camera.GetFormat()==raspicam::RASPICAM_FORMAT_BGR ||  Camera.GetFormat()==raspicam::RASPICAM_FORMAT_RGB ) {
+void saveImage (string filepath, unsigned char *data, raspicam::RaspiCam &Camera) {
+    std::ofstream outFile (filepath.c_str(), std::ios::binary);
+    if (Camera.GetFormat() == raspicam::RASPICAM_FORMAT_BGR || Camera.GetFormat() == raspicam::RASPICAM_FORMAT_RGB) {
         outFile<<"P6\n";
-    } else if ( Camera.GetFormat()==raspicam::RASPICAM_FORMAT_GRAY ) {
+    } else if (Camera.GetFormat() == raspicam::RASPICAM_FORMAT_GRAY) {
         outFile<<"P5\n";
-    } else if ( Camera.GetFormat()==raspicam::RASPICAM_FORMAT_YUV420 ) { //made up format
+    } else if (Camera.GetFormat() == raspicam::RASPICAM_FORMAT_YUV420) { //made up format
         outFile<<"P7\n";
     }
     outFile<<Camera.GetWidth() <<" "<<Camera.GetHeight() <<" 255\n";
-    outFile.write ((char*)data, Camera.GetImageBufferSize());
+    outFile.write((char*)data, Camera.GetImageBufferSize());
 }
 
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv) {
     if (argc==1) {
         cerr<<"Usage (-help for help)"<<endl;
     }
 
-    if ( findParam ("-help", argc, argv) !=-1) {
+    if (findParam("-help", argc, argv) !=-1) {
         showUsage();
         return -1;
     }
 
   
     raspicam::RaspiCam Camera;
-    processCommandLine(argc,argv,Camera);
+    processCommandLine(argc, argv, Camera);
     cout<<"Connecting to camera"<<endl;
     
     if (!Camera.Open()){
@@ -228,7 +228,7 @@ int main (int argc, char **argv) {
 
 
 
-    cerr << timer.getSecs() << " seconds for " << nFramesCaptured << "  frames : FPS " << ((float)(nFramesCaptured) / timer.getSecs()) <<endl;
+    cerr << timer.getSecs() << " seconds for " << nFramesCaptured << "  frames : FPS " << ((float)(nFramesCaptured) / timer.getSecs()) << endl;
 
     Camera.Release();
 
